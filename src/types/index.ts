@@ -1,7 +1,7 @@
 export interface Person {
   id: string; // ITS number — the only unique identifier
   gender: 'Male' | 'Female';
-  age: number;
+  age: number | undefined; // optional, can be added later
   visits?: Visit[]; // optional, used for profile aggregation
 }
 

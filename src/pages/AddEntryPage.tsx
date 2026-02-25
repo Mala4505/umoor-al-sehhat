@@ -108,10 +108,10 @@ export function AddEntryPage({
       return;
     }
 
-    if (isNewPerson && !age) {
-      showToast('Please enter age for new person', 'error');
-      return;
-    }
+    // if (isNewPerson && !age) {
+    //   showToast('Please enter age for new person', 'error');
+    //   return;
+    // }
 
     if (!height || !weight) {
       showToast('Height and weight are required', 'error');
@@ -124,7 +124,8 @@ export function AddEntryPage({
         const newPerson: Person = {
           id: trimmedIts,
           gender,
-          age: Number(age)
+          // age: Number(age)
+          age: age ? Number(age) : undefined
         };
         await onAddPerson(newPerson);
       }
@@ -147,7 +148,16 @@ export function AddEntryPage({
 
       await onAddVisit(newVisit);
       showToast('Entry saved successfully!', 'success');
-      navigate('records');
+      // navigate('records');
+      setHeight('');
+      setWeight('');
+      setSystolic('');
+      setDiastolic('');
+      setSugarValue('');
+      setNotes('');
+      setIsNewPerson(null);
+      setExistingPerson(null);
+      setItsInput('');
     } catch (error) {
       console.error('Save failed:', error);
       showToast('Failed to save entry', 'error');
@@ -362,7 +372,8 @@ export function AddEntryPage({
                       min="1"
                       max="120"
                       className="w-full h-12 rounded-xl px-4 bg-slate-50 border border-slate-200 text-slate-800 text-base placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-sky-400 transition-all"
-                      required={isNewPerson} />
+                      // required={isNewPerson}
+                       />
 
                   </div>
                 </SectionCard>

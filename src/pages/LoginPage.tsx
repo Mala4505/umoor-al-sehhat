@@ -36,7 +36,7 @@ export function LoginPage({ onLogin, showToast }: LoginPageProps) {
             <HeartPulseIcon className="h-8 w-8 text-white" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-800">
-            Umoor al-Sehhat
+            Umoor Al-Sehhat
           </h1>
           <p className="mt-1 text-sm text-slate-500">Health Screening App</p>
         </div>

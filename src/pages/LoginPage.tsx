@@ -45,9 +45,9 @@ export function LoginPage({ onLogin, showToast }: LoginPageProps) {
         <div
           className={`rounded-3xl border border-slate-100 bg-white p-6 shadow-sm transition-transform ${isShaking ? 'animate-[shake_0.4s_ease-in-out]' : ''}`}>
 
-          <h2 className="mb-5 text-base font-semibold text-slate-700">
+          {/* <h2 className="mb-5 text-base font-semibold text-slate-700">
             Volunteer Access
-          </h2>
+          </h2> */}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>

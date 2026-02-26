@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { EyeIcon, EyeOffIcon, HeartPulseIcon } from 'lucide-react';
 
 interface LoginPageProps {

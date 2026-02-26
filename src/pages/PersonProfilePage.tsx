@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeftIcon,
@@ -11,6 +11,7 @@ import {
   CalendarIcon,
   StickyNoteIcon
 } from 'lucide-react';
+import { DateTime } from 'luxon';   // ✅ Luxon for timezone handling
 import { Person, Visit, Screen } from '../types';
 import { BMIBadge } from '../components/BMIBadge';
 
@@ -39,9 +40,14 @@ export function PersonProfilePage({
     );
   }
 
+  /* ---------- Timezone-safe sorting ---------- */
   const personVisits = visits
     .filter((v) => v.personId === person.id)
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    .sort(
+      (a, b) =>
+        DateTime.fromISO(b.date, { zone: 'utc' }).toMillis() -
+        DateTime.fromISO(a.date, { zone: 'utc' }).toMillis()
+    );
 
   const latestVisit = personVisits[0];
 
@@ -122,11 +128,9 @@ export function PersonProfilePage({
               <div className="text-right">
                 <p className="text-xs text-slate-400 mb-1">Last Visit</p>
                 <p className="text-sm font-semibold text-slate-600">
-                  {new Date(latestVisit.date).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric'
-                  })}
+                  {DateTime.fromISO(latestVisit.date, { zone: 'utc' })
+                    .setZone('Asia/Kuwait')
+                    .toLocaleString({ month: 'short', day: 'numeric', year: 'numeric' })}
                 </p>
               </div>
             </div>
@@ -200,18 +204,22 @@ export function PersonProfilePage({
                   <div className="flex items-start justify-between mb-3">
                     <div>
                       <p className="text-sm font-semibold text-slate-700">
-                        {new Date(visit.date).toLocaleDateString('en-US', {
-                          weekday: 'short',
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric'
-                        })}
+                        {DateTime.fromISO(visit.date, { zone: 'utc' })
+                          .setZone('Asia/Kuwait')
+                          .toLocaleString({
+                            weekday: 'short',
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric'
+                          })}
                       </p>
                       <p className="text-xs text-slate-400 mt-0.5">
-                        {new Date(visit.date).toLocaleTimeString('en-US', {
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
+                        {DateTime.fromISO(visit.date, { zone: 'utc' })
+                          .setZone('Asia/Kuwait')
+                          .toLocaleString({
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
                         {index === 0 && (
                           <span className="ml-2 text-teal-600 font-semibold">· Latest</span>
                         )}
@@ -232,9 +240,7 @@ export function PersonProfilePage({
                   {/* Body metrics row */}
                   <div className="grid grid-cols-3 gap-2 mb-2">
                     <MiniMetric label="Height" value={`${visit.height}`} unit="cm" />
-
                     <MiniMetric label="Weight" value={`${visit.weight}`} unit="kg" />
-
                     <MiniMetric label="BMI" value={visit.bmi.toFixed(1)} />
                   </div>
 
@@ -302,26 +308,10 @@ export function PersonProfilePage({
             />
 
             <motion.div
-              initial={{
-                opacity: 0,
-                y: 40,
-                scale: 0.96
-              }}
-              animate={{
-                opacity: 1,
-                y: 0,
-                scale: 1
-              }}
-              exit={{
-                opacity: 0,
-                y: 40,
-                scale: 0.96
-              }}
-              transition={{
-                type: 'spring',
-                stiffness: 400,
-                damping: 30
-              }}
+              initial={{ opacity: 0, y: 40, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 40, scale: 0.96 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 30 }}
               className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-sm z-50 px-4 pb-6"
             >
               <div className="bg-white rounded-3xl p-6 shadow-2xl">
@@ -360,6 +350,8 @@ export function PersonProfilePage({
     </motion.div>
   );
 }
+
+/* ---------- Supporting Components ---------- */
 
 function MetricCard({
   icon,

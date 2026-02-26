@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { Person, Visit, Screen, ToastMessage } from './types';
 import { LoginPage } from './pages/LoginPage';

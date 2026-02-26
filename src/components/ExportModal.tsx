@@ -10,6 +10,34 @@ interface ExportModalProps {
   visits: Visit[];
 }
 
+/* ✅ Kuwait time formatter */
+function formatKuwaitTime(date: string | Date) {
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Kuwait',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(date));
+}
+
+/* ✅ For filenames only (YYYY-MM-DD in Kuwait time) */
+function kuwaitDateForFile() {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Kuwait',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date());
+
+  const y = parts.find(p => p.type === 'year')?.value;
+  const m = parts.find(p => p.type === 'month')?.value;
+  const d = parts.find(p => p.type === 'day')?.value;
+
+  return `${y}-${m}-${d}`;
+}
+
 function getBMICategory(bmi: number): string {
   if (bmi < 18.5) return 'Underweight';
   if (bmi < 25) return 'Normal';
@@ -24,6 +52,7 @@ export function ExportModal({
   visits,
 }: ExportModalProps) {
 
+  /* ================= CSV EXPORT ================= */
   const exportCSV = () => {
     const headers = [
       'ITS Number',
@@ -43,11 +72,12 @@ export function ExportModal({
 
     const rows = visits.map((visit) => {
       const person = persons.find((p) => p.id === visit.personId);
+
       return [
         person?.id ?? '',
         person?.gender ?? '',
         person?.age ?? '',
-        new Date(visit.date).toLocaleDateString(),
+        formatKuwaitTime(visit.date), // ✅ FIXED
         visit.height,
         visit.weight,
         visit.bmi.toFixed(1),
@@ -69,15 +99,20 @@ export function ExportModal({
 
     const link = document.createElement('a');
     link.href = url;
-    link.download = `umoor-al-sehhat-${new Date().toISOString().split('T')[0]}.csv`;
+    link.download = `umoor-al-sehhat-${kuwaitDateForFile()}.csv`; // ✅ FIXED
     link.click();
 
     URL.revokeObjectURL(url);
     onClose();
   };
 
+  /* ================= JSON EXPORT ================= */
   const exportJSON = () => {
-    const data = { persons, visits, exportedAt: new Date().toISOString() };
+    const data = {
+      persons,
+      visits,
+      exportedAt: formatKuwaitTime(new Date()), // ✅ FIXED
+    };
 
     const blob = new Blob([JSON.stringify(data, null, 2)], {
       type: 'application/json',
@@ -87,7 +122,7 @@ export function ExportModal({
     const link = document.createElement('a');
 
     link.href = url;
-    link.download = `umoor-al-sehhat-${new Date().toISOString().split('T')[0]}.json`;
+    link.download = `umoor-al-sehhat-${kuwaitDateForFile()}.json`; // ✅ FIXED
     link.click();
 
     URL.revokeObjectURL(url);
@@ -112,9 +147,8 @@ export function ExportModal({
             onClick={onClose}
           />
 
-          {/* Center modal wrapper */}
+          {/* Center modal */}
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -141,7 +175,7 @@ export function ExportModal({
                 </button>
               </div>
 
-              {/* Scrollable body */}
+              {/* Body */}
               <div className="p-5 space-y-2.5 overflow-y-auto">
                 <ExportOption
                   icon={<DownloadIcon className="w-5 h-5 text-white" />}

@@ -10,6 +10,8 @@ import {
   UserRound
 } from 'lucide-react';
 
+import { DateTime } from 'luxon';
+
 import { Person, Visit, Screen } from '../types';
 import { BMIBadge } from '../components/BMIBadge';
 
@@ -36,22 +38,28 @@ export function DashboardPage({
   onExport
 }: DashboardPageProps) {
 
-  const todayVisits = visits.filter(
-    v => new Date(v.date).toDateString() === new Date().toDateString()
-  ).length;
+  /* ---------- Timezone-safe Today Visits ---------- */
+  const todayVisits = visits.filter(v => {
+    const visitDate = DateTime.fromISO(v.date, { zone: 'utc' }).setZone('Asia/Kuwait');
+    const todayDate = DateTime.now().setZone('Asia/Kuwait');
+    return visitDate.hasSame(todayDate, 'day');
+  }).length;
 
-  const today = new Date().toLocaleDateString('en-US', {
+  const today = DateTime.now().setZone('Asia/Kuwait').toLocaleString({
     weekday: 'long',
     month: 'long',
     day: 'numeric'
   });
 
+  /* ---------- Recent Visits ---------- */
   const recentVisits = [...visits]
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .sort((a, b) =>
+      DateTime.fromISO(b.date, { zone: 'utc' }).toMillis() -
+      DateTime.fromISO(a.date, { zone: 'utc' }).toMillis()
+    )
     .slice(0, 3);
 
   /* ---------- BMI stats ---------- */
-
   const bmiStats = React.useMemo(() => {
     const stats = {
       underweight: 0,
@@ -68,7 +76,7 @@ export function DashboardPage({
     return stats;
   }, [visits]);
 
-  const totalBMI = visits.length || 1;
+  const totalBMI = visits.length;
 
   return (
     <motion.div
@@ -77,7 +85,6 @@ export function DashboardPage({
       exit={{ opacity: 0 }}
       className="min-h-screen w-full bg-slate-50"
     >
-
       <div className="max-w-sm mx-auto px-4 pb-10">
 
         {/* Header */}
@@ -96,6 +103,7 @@ export function DashboardPage({
 
           <button
             onClick={onLogout}
+            aria-label="Logout"
             className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center"
           >
             <LogOutIcon className="w-4 h-4 text-slate-500"/>
@@ -114,15 +122,20 @@ export function DashboardPage({
             Health Distribution
           </p>
 
-          <BMIRow label="Underweight" value={bmiStats.underweight} total={totalBMI} color="bg-blue-400"/>
-          <BMIRow label="Normal" value={bmiStats.normal} total={totalBMI} color="bg-green-500"/>
-          <BMIRow label="Overweight" value={bmiStats.overweight} total={totalBMI} color="bg-orange-400"/>
-          <BMIRow label="Obese" value={bmiStats.obese} total={totalBMI} color="bg-red-500"/>
+          {totalBMI > 0 ? (
+            <>
+              <BMIRow label="Underweight" value={bmiStats.underweight} total={totalBMI} color="bg-blue-400"/>
+              <BMIRow label="Normal" value={bmiStats.normal} total={totalBMI} color="bg-green-500"/>
+              <BMIRow label="Overweight" value={bmiStats.overweight} total={totalBMI} color="bg-orange-400"/>
+              <BMIRow label="Obese" value={bmiStats.obese} total={totalBMI} color="bg-red-500"/>
+            </>
+          ) : (
+            <p className="text-xs text-slate-400">No BMI data available</p>
+          )}
         </div>
 
         {/* Action Cards */}
         <div className="space-y-3 mb-5">
-
           <ActionCard
             icon={<UserPlusIcon className="w-6 h-6 text-white"/>}
             bg="bg-teal-600"
@@ -146,7 +159,6 @@ export function DashboardPage({
             subtitle="Download CSV or JSON report"
             onClick={onExport}
           />
-
         </div>
 
         {/* Recent Activity */}
@@ -165,6 +177,7 @@ export function DashboardPage({
                   <button
                     key={visit.id}
                     onClick={() => navigate('profile', person.id)}
+                    aria-label={`View profile for ${person.id}`}
                     className="w-full bg-white rounded-xl px-4 py-3 border border-slate-100 flex items-center gap-3"
                   >
                     <div className="w-8 h-8 rounded-lg bg-teal-50 flex items-center justify-center">
@@ -176,10 +189,9 @@ export function DashboardPage({
                         {person.id}
                       </p>
                       <p className="text-xs text-slate-400">
-                        {new Date(visit.date).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric'
-                        })}
+                        {DateTime.fromISO(visit.date, { zone: 'utc' })
+                          .setZone('Asia/Kuwait')
+                          .toLocaleString({ month: 'short', day: 'numeric' })}
                       </p>
                     </div>
 
@@ -190,7 +202,6 @@ export function DashboardPage({
             </div>
           </>
         )}
-
       </div>
     </motion.div>
   );
@@ -220,12 +231,10 @@ function BMIRow({
   total:number;
   color:string;
 }) {
-
-  const percent = Math.round((value / total) * 100);
+  const percent = total > 0 ? Math.round((value / total) * 100) : 0;
 
   return (
     <div className="mb-3 last:mb-0">
-
       <div className="flex justify-between text-xs mb-1">
         <span className="text-slate-500">{label}</span>
         <span className="font-semibold text-slate-700">
@@ -239,7 +248,6 @@ function BMIRow({
           style={{ width: `${percent}%` }}
         />
       </div>
-
     </div>
   );
 }
@@ -261,6 +269,7 @@ function ActionCard({
       onClick={onClick}
       initial={{ opacity:0, y:12 }}
       animate={{ opacity:1, y:0 }}
+      aria-label={title}
       className={`w-full rounded-2xl p-5 text-left border shadow-sm
       ${isPrimary ? 'bg-teal-600 text-white border-none' : 'bg-white border-slate-100'}`}
     >

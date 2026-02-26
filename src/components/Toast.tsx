@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { CheckCircleIcon, XCircleIcon, XIcon } from 'lucide-react';
 export interface ToastMessage {
   id: string;

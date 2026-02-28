@@ -7,7 +7,8 @@ import {
   HeartPulseIcon,
   LogOutIcon,
   ChevronRightIcon,
-  UserRound
+  UserRound,
+  ChartNoAxesCombined
 } from 'lucide-react';
 
 import { DateTime } from 'luxon';
@@ -150,6 +151,13 @@ export function DashboardPage({
             title="View Records"
             subtitle="Browse all registered persons"
             onClick={() => navigate('records')}
+          />
+          <ActionCard
+            icon={<ChartNoAxesCombined className="w-6 h-6 text-sky-500"/>}
+            bg="bg-sky-50"
+            title="View Statistics"
+            subtitle="View health statistics"
+            onClick={() => navigate('statistics')}
           />
 
           <ActionCard

@@ -11,7 +11,7 @@ import {
   CalendarIcon,
   StickyNoteIcon
 } from 'lucide-react';
-import { DateTime } from 'luxon';   // ✅ Luxon for timezone handling
+import { DateTime } from 'luxon';
 import { Person, Visit, Screen } from '../types';
 import { BMIBadge } from '../components/BMIBadge';
 
@@ -40,7 +40,6 @@ export function PersonProfilePage({
     );
   }
 
-  /* ---------- Timezone-safe sorting ---------- */
   const personVisits = visits
     .filter((v) => v.personId === person.id)
     .sort(
@@ -57,17 +56,17 @@ export function PersonProfilePage({
 
   const avgSystolic = personVisits.filter((v) => v.systolic).length
     ? personVisits.filter((v) => v.systolic).reduce((s, v) => s + (v.systolic ?? 0), 0) /
-    personVisits.filter((v) => v.systolic).length
+      personVisits.filter((v) => v.systolic).length
     : null;
 
   const avgDiastolic = personVisits.filter((v) => v.diastolic).length
     ? personVisits.filter((v) => v.diastolic).reduce((s, v) => s + (v.diastolic ?? 0), 0) /
-    personVisits.filter((v) => v.diastolic).length
+      personVisits.filter((v) => v.diastolic).length
     : null;
 
   const avgSugar = personVisits.filter((v) => v.sugarValue).length
     ? personVisits.filter((v) => v.sugarValue).reduce((s, v) => s + (v.sugarValue ?? 0), 0) /
-    personVisits.filter((v) => v.sugarValue).length
+      personVisits.filter((v) => v.sugarValue).length
     : null;
 
   return (
@@ -90,7 +89,7 @@ export function PersonProfilePage({
           </button>
         </div>
 
-        {/* Person Header Card */}
+        {/* Person Header */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -150,7 +149,6 @@ export function PersonProfilePage({
             label="Avg BMI"
             value={avgBMI !== null ? avgBMI.toFixed(1) : '—'}
           />
-
           <MetricCard
             icon={<HeartIcon className="w-4 h-4 text-rose-500" />}
             iconBg="bg-rose-50"
@@ -162,7 +160,6 @@ export function PersonProfilePage({
             }
             unit={avgSystolic ? 'mmHg' : undefined}
           />
-
           <MetricCard
             icon={<DropletIcon className="w-4 h-4 text-amber-500" />}
             iconBg="bg-amber-50"
@@ -170,7 +167,6 @@ export function PersonProfilePage({
             value={avgSugar !== null ? Math.round(avgSugar).toString() : '—'}
             unit={avgSugar ? 'mg/dL' : undefined}
           />
-
           <MetricCard
             icon={<CalendarIcon className="w-4 h-4 text-indigo-500" />}
             iconBg="bg-indigo-50"
@@ -193,82 +189,12 @@ export function PersonProfilePage({
           ) : (
             <div className="space-y-3">
               {personVisits.map((visit, index) => (
-                <motion.div
+                <VisitCard
                   key={visit.id}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.15 + index * 0.05 }}
-                  className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm"
-                >
-                  {/* Visit header */}
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <p className="text-sm font-semibold text-slate-700">
-                        {DateTime.fromISO(visit.date, { zone: 'utc' })
-                          .setZone('Asia/Kuwait')
-                          .toLocaleString({
-                            weekday: 'short',
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric'
-                          })}
-                      </p>
-                      <p className="text-xs text-slate-400 mt-0.5">
-                        {DateTime.fromISO(visit.date, { zone: 'utc' })
-                          .setZone('Asia/Kuwait')
-                          .toLocaleString({
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        {index === 0 && (
-                          <span className="ml-2 text-teal-600 font-semibold">· Latest</span>
-                        )}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <BMIBadge bmi={visit.bmi} size="sm" />
-                      <button
-                        onClick={() => setShowDeleteConfirm(visit.id)}
-                        className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center active:bg-red-100 transition-colors"
-                        aria-label="Delete visit"
-                      >
-                        <TrashIcon className="w-3.5 h-3.5 text-red-400" />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Body metrics row */}
-                  <div className="grid grid-cols-3 gap-2 mb-2">
-                    <MiniMetric label="Height" value={`${visit.height}`} unit="cm" />
-                    <MiniMetric label="Weight" value={`${visit.weight}`} unit="kg" />
-                    <MiniMetric label="BMI" value={visit.bmi.toFixed(1)} />
-                  </div>
-
-                  {/* BP + Sugar badges */}
-                  {(visit.systolic || visit.sugarValue) && (
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {visit.systolic && visit.diastolic && (
-                        <span className="text-xs bg-rose-50 text-rose-600 px-2.5 py-1 rounded-full font-medium">
-                          ♥ {visit.systolic}/{visit.diastolic} mmHg
-                        </span>
-                      )}
-                      {visit.sugarValue && (
-                        <span className="text-xs bg-amber-50 text-amber-600 px-2.5 py-1 rounded-full font-medium capitalize">
-                          ◉ {visit.sugarValue} mg/dL
-                          {visit.sugarType && ` · ${visit.sugarType}`}
-                        </span>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Notes */}
-                  {visit.notes && (
-                    <div className="mt-2 flex items-start gap-1.5 pt-2 border-t border-slate-50">
-                      <StickyNoteIcon className="w-3 h-3 text-slate-400 mt-0.5 flex-shrink-0" />
-                      <p className="text-xs text-slate-500 italic">{visit.notes}</p>
-                    </div>
-                  )}
-                </motion.div>
+                  visit={visit}
+                  isLatest={index === 0}
+                  onDelete={() => setShowDeleteConfirm(visit.id)}
+                />
               ))}
             </div>
           )}
@@ -298,53 +224,16 @@ export function PersonProfilePage({
       {/* Delete Confirmation Sheet */}
       <AnimatePresence>
         {showDeleteConfirm && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
-              onClick={() => setShowDeleteConfirm(null)}
-            />
-
-            <motion.div
-              initial={{ opacity: 0, y: 40, scale: 0.96 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 40, scale: 0.96 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-              className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-sm z-50 px-4 pb-6"
-            >
-              <div className="bg-white rounded-3xl p-6 shadow-2xl">
-                <div className="w-12 h-12 rounded-2xl bg-red-50 flex items-center justify-center mx-auto mb-4">
-                  <TrashIcon className="w-6 h-6 text-red-500" />
-                </div>
-                <h3 className="text-lg font-bold text-slate-800 text-center">Delete Visit?</h3>
-                <p className="text-sm text-slate-500 text-center mt-2 mb-6">
-                  This will permanently delete this visit record.
-                </p>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setShowDeleteConfirm(null)}
-                    className="flex-1 rounded-full py-3 border border-slate-200 text-slate-600 font-semibold active:bg-slate-50 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (showDeleteConfirm) {
-                        onDeleteVisit(showDeleteConfirm);
-                        setShowDeleteConfirm(null);
-                        showToast('Visit deleted', 'success');
-                      }
-                    }}
-                    className="flex-1 rounded-full py-3 bg-red-500 active:bg-red-600 text-white font-semibold transition-colors"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </>
+          <DeleteConfirm
+            onCancel={() => setShowDeleteConfirm(null)}
+            onConfirm={() => {
+              if (showDeleteConfirm) {
+                onDeleteVisit(showDeleteConfirm);
+                setShowDeleteConfirm(null);
+                showToast('Visit deleted', 'success');
+              }
+            }}
+          />
         )}
       </AnimatePresence>
     </motion.div>
@@ -353,19 +242,7 @@ export function PersonProfilePage({
 
 /* ---------- Supporting Components ---------- */
 
-function MetricCard({
-  icon,
-  iconBg,
-  label,
-  value,
-  unit
-}: {
-  icon: React.ReactNode;
-  iconBg: string;
-  label: string;
-  value: string;
-  unit?: string;
-}) {
+function MetricCard({ icon, iconBg, label, value, unit }: any) {
   return (
     <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
       <div className="flex items-center gap-2 mb-2">
@@ -380,7 +257,7 @@ function MetricCard({
   );
 }
 
-function MiniMetric({ label, value, unit }: { label: string; value: string; unit?: string }) {
+function MiniMetric({ label, value, unit }: any) {
   return (
     <div className="text-center bg-slate-50 rounded-xl py-2">
       <p className="text-xs text-slate-400">{label}</p>
@@ -388,6 +265,158 @@ function MiniMetric({ label, value, unit }: { label: string; value: string; unit
         {value}
         {unit && <span className="text-xs font-normal text-slate-400">{unit}</span>}
       </p>
+    </div>
+  );
+}
+
+/* ---------- Reusable Visit Card ---------- */
+function VisitCard({ visit, isLatest, onDelete }: any) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm"
+    >
+      <div className="flex items-start justify-between mb-3">
+        <div>
+          <p className="text-sm font-semibold text-slate-700">
+            {DateTime.fromISO(visit.date, { zone: 'utc' })
+              .setZone('Asia/Kuwait')
+              .toLocaleString({
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+              })}
+          </p>
+          <p className="text-xs text-slate-400 mt-0.5">
+            {DateTime.fromISO(visit.date, { zone: 'utc' })
+              .setZone('Asia/Kuwait')
+              .toLocaleString({ hour: '2-digit', minute: '2-digit' })}
+            {isLatest && <span className="ml-2 text-teal-600 font-semibold">· Latest</span>}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <BMIBadge bmi={visit.bmi} size="sm" />
+          <button
+            onClick={onDelete}
+            className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center active:bg-red-100 transition-colors"
+            aria-label="Delete visit"
+          >
+            <TrashIcon className="w-3.5 h-3.5 text-red-400" />
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-2 mb-2">
+        <MiniMetric label="Height" value={`${visit.height}`} unit="cm" />
+        <MiniMetric label="Weight" value={`${visit.weight}`} unit="kg" />
+        <MiniMetric label="BMI" value={visit.bmi.toFixed(1)} />
+      </div>
+
+      {(visit.systolic || visit.sugarValue) && (
+        <div className="flex flex-wrap gap-2 mt-2">
+          {visit.systolic && visit.diastolic && (
+            <span className="text-xs bg-rose-50 text-rose-600 px-2.5 py-1 rounded-full font-medium">
+              ♥ {visit.systolic}/{visit.diastolic} mmHg
+            </span>
+          )}
+          {visit.sugarValue && (
+            <span className="text-xs bg-amber-50 text-amber-600 px-2.5 py-1 rounded-full font-medium capitalize">
+              ◉ {visit.sugarValue} mg/dL
+              {visit.sugarType && ` · ${visit.sugarType}`}
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* ---------- Known Conditions from visit ---------- */}
+      {visit.knownConditions && visit.knownConditions.length > 0 && (
+        <div className="flex flex-wrap gap-2 mt-3 pt-2 border-t border-slate-50">
+          {visit.knownConditions.map((cond: string) => (
+            <span
+              key={cond}
+              className="text-xs bg-purple-50 text-purple-600 px-2.5 py-1 rounded-full font-medium"
+            >
+              {cond}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Notes */}
+      {visit.notes && (
+        <div className="mt-2 flex items-start gap-1.5 pt-2 border-t border-slate-50">
+          <StickyNoteIcon className="w-3 h-3 text-slate-400 mt-0.5" />
+          <p className="text-xs text-slate-500 italic">{visit.notes}</p>
+        </div>
+      )}
+    </motion.div>
+  );
+}
+
+/* ---------- Delete Confirmation Sheet ---------- */
+function DeleteConfirm({ onCancel, onConfirm }: any) {
+  return (
+    <>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
+        onClick={onCancel}
+      />
+      <motion.div
+        initial={{ opacity: 0, y: 40, scale: 0.96 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 40, scale: 0.96 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-sm z-50 px-4 pb-6"
+      >
+        <div className="bg-white rounded-3xl p-6 shadow-2xl">
+          <div className="w-12 h-12 rounded-2xl bg-red-50 flex items-center justify-center mx-auto mb-4">
+            <TrashIcon className="w-6 h-6 text-red-500" />
+          </div>
+          <h3 className="text-lg font-bold text-slate-800 text-center">Delete Visit?</h3>
+          <p className="text-sm text-slate-500 text-center mt-2 mb-6">
+            This will permanently delete this visit record.
+          </p>
+          <div className="flex gap-3">
+            <button
+              onClick={onCancel}
+              className="flex-1 rounded-full py-3 border border-slate-200 text-slate-600 font-semibold active:bg-slate-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onConfirm}
+              className="flex-1 rounded-full py-3 bg-red-500 active:bg-red-600 text-white font-semibold transition-colors"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </>
+  );
+}
+
+/* ---------- Helper for AddEntry Two-Column Layout ---------- */
+export function TwoColumnOptions({ options, selected, onChange }: any) {
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      {options.map((opt: string) => (
+        <label key={opt} className="flex items-center gap-2 text-sm text-slate-700">
+          <input
+            type="checkbox"
+            value={opt}
+            checked={selected.includes(opt)}
+            onChange={() => onChange(opt)}
+            className="w-4 h-4 text-teal-600 rounded border-slate-300 focus:ring-2 focus:ring-teal-400"
+          />
+          {opt}
+        </label>
+      ))}
     </div>
   );
 }

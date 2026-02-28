@@ -5,6 +5,7 @@ import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { AddEntryPage } from './pages/AddEntryPage';
 import { RecordsPage } from './pages/RecordsPage';
+import { StatisticsPage } from './pages/StatisticsPage';
 import { PersonProfilePage } from './pages/PersonProfilePage';
 import { ExportModal } from './components/ExportModal';
 import { Toast } from './components/Toast';
@@ -164,6 +165,15 @@ export function App() {
         {currentScreen === 'records' && isAuthenticated && (
           <div key="records">
             <RecordsPage
+              navigate={navigate}
+              persons={persons}
+              visits={visits}
+            />
+          </div>
+        )}
+        {currentScreen === 'statistics' && isAuthenticated && (
+          <div key="statistics">
+            <StatisticsPage
               navigate={navigate}
               persons={persons}
               visits={visits}

@@ -29,6 +29,23 @@ function generateId(): string {
   return Math.random().toString(36).substring(2) + Date.now().toString(36);
 }
 
+// Returns the min/max normal weight for a given height (kg)
+export function getNormalWeightRange(height: number): { min: number; max: number } {
+  const h = height / 100;
+  return {
+    min: 18.5 * h * h,
+    max: 24.9 * h * h
+  };
+}
+
+// Returns weight difference info
+export function getWeightDifference(height: number, weight: number) {
+  const { min, max } = getNormalWeightRange(height);
+  if (weight < min) return { type: 'under', kg: min - weight };
+  if (weight > max) return { type: 'over', kg: weight - max };
+  return null;
+}
+
 type SugarType = 'fasting' | 'random' | 'post-meal';
 
 export function AddEntryPage({
@@ -57,6 +74,11 @@ export function AddEntryPage({
   const [sugarType, setSugarType] = useState<SugarType>('fasting');
   const [notes, setNotes] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+
+  const [knownConditions, setKnownConditions] = useState<string[]>([]);
+  const conditionsList = ["Diabetic", "Hypertension", "Cardiac", "Cancer"];
+
+
 
   // Auto-detect ITS on input
   useEffect(() => {
@@ -130,6 +152,7 @@ export function AddEntryPage({
         await onAddPerson(newPerson);
       }
 
+
       const computedBmi = calculateBMI(Number(height), Number(weight));
       const newVisit: Visit = {
         id: generateId(), // VisistApi will replace with DB UUID
@@ -143,6 +166,7 @@ export function AddEntryPage({
         diastolic: diastolic ? Number(diastolic) : undefined,
         sugarValue: sugarValue ? Number(sugarValue) : undefined,
         sugarType: sugarValue ? sugarType : undefined,
+        knownConditions: knownConditions.length > 0 ? knownConditions : [],
         notes: notes.trim() || undefined
       };
 
@@ -158,6 +182,7 @@ export function AddEntryPage({
       setIsNewPerson(null);
       setExistingPerson(null);
       setItsInput('');
+      setKnownConditions([]);
     } catch (error) {
       console.error('Save failed:', error);
       showToast('Failed to save entry', 'error');
@@ -372,8 +397,8 @@ export function AddEntryPage({
                       min="1"
                       max="120"
                       className="w-full h-12 rounded-xl px-4 bg-slate-50 border border-slate-200 text-slate-800 text-base placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-sky-400 transition-all"
-                      // required={isNewPerson}
-                       />
+                    // required={isNewPerson}
+                    />
 
                   </div>
                 </SectionCard>
@@ -425,34 +450,74 @@ export function AddEntryPage({
 
             {/* Live BMI */}
             <AnimatePresence>
-              {bmi !== null &&
+              {bmi !== null && height && weight &&
                 <motion.div
-                  initial={{
-                    opacity: 0,
-                    scale: 0.96
-                  }}
-                  animate={{
-                    opacity: 1,
-                    scale: 1
-                  }}
-                  exit={{
-                    opacity: 0,
-                    scale: 0.96
-                  }}
-                  transition={{
-                    duration: 0.2
-                  }}
-                  className="flex items-center justify-between bg-teal-50 border border-teal-100 rounded-xl px-4 py-3">
+                  initial={{ opacity: 0, scale: 0.96 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.96 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex flex-col bg-teal-50 border border-teal-100 rounded-xl px-4 py-3 space-y-2">
 
-                  <div>
-                    <p className="text-xs font-semibold text-teal-600 uppercase tracking-wide">
-                      BMI (auto)
-                    </p>
-                    <p className="text-2xl font-bold text-teal-700 mt-0.5 leading-none">
-                      {bmi.toFixed(1)}
-                    </p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-semibold text-teal-600 uppercase tracking-wide">
+                        BMI (auto)
+                      </p>
+                      <p className="text-2xl font-bold text-teal-700 mt-0.5 leading-none">
+                        {bmi.toFixed(1)}
+                      </p>
+                    </div>
+                    <BMIBadge bmi={bmi} size="sm" />
                   </div>
-                  <BMIBadge bmi={bmi} size="sm" />
+
+                  {/* Weight difference text */}
+                  {(() => {
+                    const diff = getWeightDifference(Number(height), Number(weight));
+                    if (!diff) return null;
+                    return (
+                      <p className={`text-sm font-medium ${diff.type === 'over' ? 'text-red-600' : 'text-blue-600'
+                        }`}>
+                        {diff.type === 'over'
+                          ? `${diff.kg.toFixed(1)} kg above normal`
+                          : `${diff.kg.toFixed(1)} kg below normal`}
+                      </p>
+                    );
+                  })()}
+
+                  {/* Target weight bar */}
+                  <div className="relative w-full h-2 bg-slate-200 rounded-full">
+                    {(() => {
+                      const { min, max } = getNormalWeightRange(Number(height));
+                      const rangeWidth = max - min;
+                      const currPercent = ((Number(weight) - min) / rangeWidth) * 100;
+                      return (
+                        <>
+                          {/* Normal weight range */}
+                          <div
+                            className="absolute left-0 top-0 h-full bg-teal-400 rounded-full"
+                            style={{ width: '100%' }}
+                          />
+
+                          {/* Current weight marker */}
+                          <div
+                            className={`absolute top-0 h-full w-2 rounded-full ${Number(weight) < min ? 'bg-blue-600' :
+                                Number(weight) > max ? 'bg-red-600' : 'bg-green-600'
+                              }`}
+                            style={{
+                              left: `${Math.min(Math.max(currPercent, 0), 100)}%`,
+                              transform: 'translateX(-50%)'
+                            }}
+                          />
+                        </>
+                      );
+                    })()}
+                  </div>
+
+                  {/* Min / Max labels */}
+                  <div className="flex justify-between text-xs text-slate-500 mt-0.5">
+                    <span>Normal: {getNormalWeightRange(Number(height)).min.toFixed(1)}kg</span>
+                    <span>{getNormalWeightRange(Number(height)).max.toFixed(1)}kg</span>
+                  </div>
                 </motion.div>
               }
             </AnimatePresence>
@@ -567,6 +632,35 @@ export function AddEntryPage({
                   </button>
                 )}
               </div>
+            </div>
+          </SectionCard>
+
+          <SectionCard
+            icon={<UserCheckIcon className="w-4 h-4 text-purple-600" />}
+            iconBg="bg-purple-50"
+            label="Known Conditions"
+            optional
+          >
+            <div className="grid grid-cols-2 gap-2">
+              {conditionsList.map((cond) => (
+                <label key={cond} className="flex items-center gap-2 text-sm text-slate-700">
+                  <input
+                    type="checkbox"
+                    value={cond}
+                    checked={knownConditions.includes(cond)}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setKnownConditions((prev) =>
+                        prev.includes(value)
+                          ? prev.filter((c) => c !== value)
+                          : [...prev, value]
+                      );
+                    }}
+                    className="w-4 h-4 text-purple-600 rounded border-slate-300 focus:ring-2 focus:ring-purple-400"
+                  />
+                  {cond}
+                </label>
+              ))}
             </div>
           </SectionCard>
 
